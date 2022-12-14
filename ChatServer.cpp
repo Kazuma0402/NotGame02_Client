@@ -103,12 +103,44 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
         sock2 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (sock > 0)
         {
-            //  message.append("socket ok\r\n");
-
+			message.append("参加しました\r\n");
         }
 
         // ノンブロッキングソケットに設定
         ioctlsocket(sock, FIONBIO, &arg);
+		//
+		SetWindowTextA(hIpAddressEdit, "192.168.56.1");
+		SetWindowTextA(hPortEdit, ("8080"));
+		SetWindowTextA(hSendNameEdit, ("NoName"));
+		//---------------------------------------------------
+		GetWindowTextA(hSendMessageEdit, buff, 1024);
+
+		// 名前の取得
+		GetWindowTextA(hSendNameEdit, name, 16);
+		// 宛先IPアドレスの取得
+		GetWindowTextA(hIpAddressEdit, ipAddr, 256);
+		// 宛先のポート番号の取得
+		port = GetDlgItemInt(hDlg, IDC_PORTEDIT, FALSE, FALSE);
+
+		memset(&toAddr, 0, sizeof(toAddr));
+		toAddr.sin_family = AF_INET;
+		inet_pton(AF_INET, ipAddr, &toAddr.sin_addr.s_addr);
+		toAddr.sin_port = htons(port);
+		sendto(sock, buff, sizeof(buff), 0, (SOCKADDR*)&toAddr, tolen);
+		sendto(sock2, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
+
+
+		// buffをチャット欄に追加
+		message.append(buff);
+		message.append("\r\n");
+
+		// チャット欄に文字列セット
+		SetWindowTextA(hMessageEdit, message.c_str());
+
+
+
+		// 送信メッセージ入力欄をクリア
+		SetWindowTextA(hSendMessageEdit, "");
 
         // タイマーセット
         SetTimer(hDlg, TIMERID, 100, NULL);
@@ -150,7 +182,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 
             // 名前の取得
             GetWindowTextA(hSendNameEdit, name, 16);
-
             // 宛先IPアドレスの取得
             GetWindowTextA(hIpAddressEdit, ipAddr, 256);
             // 宛先のポート番号の取得
