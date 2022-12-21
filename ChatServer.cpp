@@ -108,7 +108,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 
         // ノンブロッキングソケットに設定
         ioctlsocket(sock, FIONBIO, &arg);
-		//
+		//サーバーのパソコンのアドレスで固定
 		SetWindowTextA(hIpAddressEdit, "192.168.56.1");
 		SetWindowTextA(hPortEdit, ("8080"));
 		SetWindowTextA(hSendNameEdit, ("NoName"));
