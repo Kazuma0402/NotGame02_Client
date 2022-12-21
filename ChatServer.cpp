@@ -73,10 +73,14 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
     char buff[1024];
     char ipAddr[256];
     char name[16];
+
     int port;
     char portstr[256];
     u_long arg = 0x01;
+
     int ret;
+    int ret2;
+
     SOCKADDR_IN fromAddr;
     int fromlen = sizeof(fromAddr);
 
@@ -109,7 +113,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
         // ノンブロッキングソケットに設定
         ioctlsocket(sock, FIONBIO, &arg);
 		//サーバーのパソコンのアドレスで固定
-		SetWindowTextA(hIpAddressEdit, "192.168.56.1");
+		SetWindowTextA(hIpAddressEdit, "192.168.43.69");
 		SetWindowTextA(hPortEdit, ("8080"));
 		SetWindowTextA(hSendNameEdit, ("NoName"));
 		//---------------------------------------------------
@@ -130,14 +134,12 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 		sendto(sock2, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
 
 
-		// buffをチャット欄に追加
-		message.append(buff);
-		message.append("\r\n");
+		//// buffをチャット欄に追加
+		//message.append(buff);
+		//message.append("\r\n");
 
 		// チャット欄に文字列セット
 		SetWindowTextA(hMessageEdit, message.c_str());
-
-
 
 		// 送信メッセージ入力欄をクリア
 		SetWindowTextA(hSendMessageEdit, "");
@@ -149,7 +151,8 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
     case WM_TIMER:
         // 受信
         ret = recvfrom(sock, (char*)buff, sizeof(buff), 0, (SOCKADDR*)&fromAddr, &fromlen);
-        if (ret < 0)
+        ret2 = recvfrom(sock, (char*)name, sizeof(name), 0, (SOCKADDR*)&fromAddr, &fromlen);
+        if (ret < 0 || ret2 < 0)
         {
             if (WSAGetLastError() != WSAEWOULDBLOCK)
             {
@@ -160,16 +163,22 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
         }
         else
         {
-            // 受信データがあれば、チャット欄に追加
-            message.append((buff));
-            message.append("-- from:");
-            inet_ntop(AF_INET, &fromAddr.sin_addr, ipAddr, sizeof(ipAddr));
-            message.append(ipAddr);
+            message.append(name);
             message.append(":");
-            sprintf_s(portstr, "%d", ntohs(fromAddr.sin_port));
-            message.append(portstr);
+            message.append(buff);
             message.append("\r\n");
             SetWindowTextA(hMessageEdit, message.c_str());
+
+            //// 受信データがあれば、チャット欄に追加
+            //message.append((buff));
+            //message.append("-- from:");
+            //inet_ntop(AF_INET, &fromAddr.sin_addr, ipAddr, sizeof(ipAddr));
+            //message.append(ipAddr);
+            //message.append(":");
+            //sprintf_s(portstr, "%d", ntohs(fromAddr.sin_port));
+            //message.append(portstr);
+            //message.append("\r\n");
+            //SetWindowTextA(hMessageEdit, message.c_str());
         }
         return TRUE;
     case WM_COMMAND:
@@ -179,7 +188,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
         case IDC_SENDBUTTON:
             // 送信メッセージを取得
             GetWindowTextA(hSendMessageEdit, buff, 1024);
-
             // 名前の取得
             GetWindowTextA(hSendNameEdit, name, 16);
             // 宛先IPアドレスの取得
@@ -196,13 +204,13 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 
 
             // buffをチャット欄に追加
+            message.append(name);
+            message.append(":");
             message.append(buff);
             message.append("\r\n");
 
             // チャット欄に文字列セット
             SetWindowTextA(hMessageEdit, message.c_str());
-
-
 
             // 送信メッセージ入力欄をクリア
             SetWindowTextA(hSendMessageEdit, "");
