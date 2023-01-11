@@ -217,6 +217,22 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 
             return TRUE;
         case IDCANCEL:
+            char buff2[1024] = "退出しました";
+            // 名前の取得
+            GetWindowTextA(hSendNameEdit, name, 16);
+            // 宛先IPアドレスの取得
+            GetWindowTextA(hIpAddressEdit, ipAddr, 256);
+            // 宛先のポート番号の取得
+            port = GetDlgItemInt(hDlg, IDC_PORTEDIT, FALSE, FALSE);
+
+            memset(&toAddr, 0, sizeof(toAddr));
+            toAddr.sin_family = AF_INET;
+            inet_pton(AF_INET, ipAddr, &toAddr.sin_addr.s_addr);
+            toAddr.sin_port = htons(port);
+            sendto(sock, buff2, sizeof(buff2), 0, (SOCKADDR*)&toAddr, tolen);
+            sendto(sock2, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
+
+
             KillTimer(hDlg, TIMERID);
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
