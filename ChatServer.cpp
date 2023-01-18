@@ -217,7 +217,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 
             return TRUE;
         case IDCANCEL:
-            char buff2[1024] = "退出しました";
+            char buff2[1024] = "N0NZ3ypzgRzm";
             // 名前の取得
             GetWindowTextA(hSendNameEdit, name, 16);
             // 宛先IPアドレスの取得
