@@ -212,6 +212,8 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
             SetWindowTextA(hSendMessageEdit, "");
 
             return TRUE;
+
+        //閉じるボタンを押したら
         case IDCANCEL:
             char buff2[1024] = "N0NZ3ypzgRzm";
             // 名前の取得

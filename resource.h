@@ -1,6 +1,6 @@
 ﻿//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ で生成されたインクルード ファイル。
-// ChatServer.rc で使用
+// ChatClient.rc で使用
 //
 #define IDC_MYICON                      2
 #define IDD_CHATSERVER_DIALOG           102
