@@ -133,11 +133,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 		sendto(sock, buff, sizeof(buff), 0, (SOCKADDR*)&toAddr, tolen);
 		sendto(sock2, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
 
-
-		//// buffをチャット欄に追加
-		//message.append(buff);
-		//message.append("\r\n");
-
 		// チャット欄に文字列セット
 		SetWindowTextA(hMessageEdit, message.c_str());
 
@@ -167,6 +162,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
             message.append(":");
             message.append(buff);
             message.append("\r\n");
+            //文字の表示
             SetWindowTextA(hMessageEdit, message.c_str());
 
             //// 受信データがあれば、チャット欄に追加
