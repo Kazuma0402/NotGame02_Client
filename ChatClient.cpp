@@ -3,7 +3,7 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include "framework.h"
-#include "ChatServer.h"
+#include "ChatClient.h"
 #include "resource.h"
 #include <string>
 
