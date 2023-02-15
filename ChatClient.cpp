@@ -6,6 +6,7 @@
 #include "ChatClient.h"
 #include "resource.h"
 #include <string>
+#include <regex>
 
 #pragma comment( lib, "ws2_32.lib" )
 
@@ -22,7 +23,6 @@ const UINT_PTR TIMERID = 1000;
 
 std::string message;   // チャット欄にセットする文字列
 SOCKET sock;
-SOCKET sock2;
 
 
 // ダイアログプロシージャ
@@ -74,6 +74,10 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
     char ipAddr[256];
     char name[16];
 
+    std::string str;
+    std::regex re("N0NZ3ypzgRzm");
+    std::smatch m;
+
     int port;
     char portstr[256];
     u_long arg = 0x01;
@@ -104,7 +108,6 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 
         // ソケット作成
         sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        sock2 = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (sock > 0)
         {
 			message.append("参加しました\r\n");
@@ -112,11 +115,26 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 
         // ノンブロッキングソケットに設定
         ioctlsocket(sock, FIONBIO, &arg);
+
+        // bind
+        SOCKADDR_IN bindAddr;
+        memset(&bindAddr, 0, sizeof(bindAddr));
+        bindAddr.sin_family = AF_INET;
+        bindAddr.sin_port = htons(SERVERPORT);
+        bindAddr.sin_addr.s_addr = htonl(INADDR_ANY);	// すべての自分のNICが対象
+        if (ret = bind(sock, (SOCKADDR*)&bindAddr, sizeof(bindAddr)) == 0)
+        {
+        }
+
+        // タイマーセット
+        SetTimer(hDlg, TIMERID, 100, NULL);
+
 		//サーバーのパソコンのアドレスで固定
 		SetWindowTextA(hIpAddressEdit, "192.168.43.69");
 		SetWindowTextA(hPortEdit, ("8080"));
 		SetWindowTextA(hSendNameEdit, ("NoName"));
 		//---------------------------------------------------
+
 		GetWindowTextA(hSendMessageEdit, buff, 1024);
 
 		// 名前の取得
@@ -131,7 +149,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
 		inet_pton(AF_INET, ipAddr, &toAddr.sin_addr.s_addr);
 		toAddr.sin_port = htons(port);
 		sendto(sock, buff, sizeof(buff), 0, (SOCKADDR*)&toAddr, tolen);
-		sendto(sock2, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
+		sendto(sock, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
 
 		// チャット欄に文字列セット
 		SetWindowTextA(hMessageEdit, message.c_str());
@@ -147,34 +165,38 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
         // 受信
         ret = recvfrom(sock, (char*)buff, sizeof(buff), 0, (SOCKADDR*)&fromAddr, &fromlen);
         ret2 = recvfrom(sock, (char*)name, sizeof(name), 0, (SOCKADDR*)&fromAddr, &fromlen);
-        if (ret < 0 || ret2 < 0)
+        if (ret < 0)// || ret2 < 0)
         {
             if (WSAGetLastError() != WSAEWOULDBLOCK)
             {
                 // エラー
-
+                exit(1);
             }
             return TRUE;
         }
         else
         {
-            message.append(name);
-            message.append(":");
-            message.append(buff);
-            message.append("\r\n");
-            //文字の表示
-            SetWindowTextA(hMessageEdit, message.c_str());
+            str = buff;
+            //文字検索
+            if (std::regex_search(str, m, re))
+            {
+                //〇〇が退出しましたと表示
+                message.append(name);
+                message.append("が退出しました");
+                message.append("\r\n");
+                //文字の表示
+                SetWindowTextA(hMessageEdit, message.c_str());
 
-            //// 受信データがあれば、チャット欄に追加
-            //message.append((buff));
-            //message.append("-- from:");
-            //inet_ntop(AF_INET, &fromAddr.sin_addr, ipAddr, sizeof(ipAddr));
-            //message.append(ipAddr);
-            //message.append(":");
-            //sprintf_s(portstr, "%d", ntohs(fromAddr.sin_port));
-            //message.append(portstr);
-            //message.append("\r\n");
-            //SetWindowTextA(hMessageEdit, message.c_str());
+            }
+            else
+            {
+                message.append(name);
+                message.append(":");
+                message.append(buff);
+                message.append("\r\n");
+                //文字の表示
+                SetWindowTextA(hMessageEdit, message.c_str());
+            }
         }
         return TRUE;
     case WM_COMMAND:
@@ -195,8 +217,8 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
             toAddr.sin_family = AF_INET;
             inet_pton(AF_INET, ipAddr, &toAddr.sin_addr.s_addr);
             toAddr.sin_port = htons(port);
-            sendto(sock, buff, sizeof(buff), 0, (SOCKADDR*)&toAddr, tolen);
-            sendto(sock2, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
+            ret = sendto(sock, buff, sizeof(buff), 0, (SOCKADDR*)&toAddr, tolen);
+            ret2 = sendto(sock, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
 
 
             // buffをチャット欄に追加
@@ -222,13 +244,18 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
             GetWindowTextA(hIpAddressEdit, ipAddr, 256);
             // 宛先のポート番号の取得
             port = GetDlgItemInt(hDlg, IDC_PORTEDIT, FALSE, FALSE);
-
+            
+            //初期化
             memset(&toAddr, 0, sizeof(toAddr));
+            //アドレスファミリ(IPv4)
             toAddr.sin_family = AF_INET;
+            //テキストから数値への変換(IPv4) ※AF_INET6ならIPv6
             inet_pton(AF_INET, ipAddr, &toAddr.sin_addr.s_addr);
+            //ホストバイトオーダーをネットワークバイトオーダーに変換
             toAddr.sin_port = htons(port);
-            sendto(sock, buff2, sizeof(buff2), 0, (SOCKADDR*)&toAddr, tolen);
-            sendto(sock2, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
+            //データの送信
+            ret = sendto(sock, buff2, sizeof(buff2), 0, (SOCKADDR*)&toAddr, tolen);
+            ret2 = sendto(sock, name, sizeof(name), 0, (SOCKADDR*)&toAddr, tolen);
 
 
             KillTimer(hDlg, TIMERID);
