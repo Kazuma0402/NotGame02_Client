@@ -1,0 +1,5 @@
+SERVERR
+→https://github.com/Kazuma0402/NotGame02_Server
+
+CLIENT
+→https://github.com/Kazuma0402/NotGame02_Client
