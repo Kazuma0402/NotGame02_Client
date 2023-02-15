@@ -78,6 +78,10 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
     std::regex re("N0NZ3ypzgRzm");
     std::smatch m;
 
+    std::string str2;
+    std::regex re2("ADRcsTswm20Okl");
+    std::smatch m2;
+
     int port;
     char portstr[256];
     u_long arg = 0x01;
@@ -177,6 +181,7 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
         else
         {
             str = buff;
+            str2 = buff;
             //文字検索
             if (std::regex_search(str, m, re))
             {
@@ -187,6 +192,15 @@ BOOL CALLBACK DlgProc(HWND hDlg, UINT msg, WPARAM wp, LPARAM lp)
                 //文字の表示
                 SetWindowTextA(hMessageEdit, message.c_str());
 
+            }
+            else if (std::regex_search(str2, m2, re2))
+            {
+                //〇〇が入室しましたと表示
+                message.append(name);
+                message.append("が入室しました");
+                message.append("\r\n");
+                //文字の表示
+                SetWindowTextA(hMessageEdit, message.c_str());
             }
             else
             {
